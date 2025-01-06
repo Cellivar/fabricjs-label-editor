@@ -5,8 +5,6 @@ This image editor allows users to draw default shapes, pen-drawing, line, curve 
 ![Positioning Example](screenshots/editor.jpg)
 
 ## Dependency
-  * jQuery v3.5.1
-  * jQuery spectrum-colorpicker2
   * Fabric.js v3.6.3
 
 ## Initialize
@@ -25,7 +23,6 @@ This image editor allows users to draw default shapes, pen-drawing, line, curve 
     'undo',
     'redo',
     'save',
-    'download',
     'clear'
   ];
 

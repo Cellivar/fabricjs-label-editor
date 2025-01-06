@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "types": [
+      "vitest/importMeta",
+      "@types/w3c-web-usb"
+    ],
+    "target": "ES2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "lib": [
+      "es2022",
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "skipLibCheck": false,
+    "isolatedModules": true,
+    "noEmit": true,
+    "strict": true,
+    "checkJs": true,
+    "declaration": true,
+    "declarationMap": true,
+    "noUnusedLocals": true,
+    "useDefineForClassFields": true,
+    "noUnusedParameters": true,
+    "forceConsistentCasingInFileNames": true,
+    "verbatimModuleSyntax": true,
+    "noImplicitOverride": true,
+    "incremental": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "lib"
+, "lib/fabricjs.mjs"  ]
+}

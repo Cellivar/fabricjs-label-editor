@@ -1,0 +1,29 @@
+{
+  "name": "fabricjs-label-editor",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc && vite build",
+    "lint": "eslint .",
+    "test": "vitest --run",
+    "test:snapshot": "vitest --run -u",
+    "serve-local": "export PORT=4444 || set PORT=4444 && serve .",
+    "all": "npm run build && npm run lint && npm run test"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.8",
+    "@types/w3c-web-usb": "^1.0.10",
+    "@vitest/coverage-v8": "^2.1.6",
+    "eslint": "^9.9.0",
+    "globals": "^15.9.0",
+    "happy-dom": "^15.11.7",
+    "https-localhost": "^4.7.1",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.0",
+    "vite-plugin-dts": "^4.3.0",
+    "vitest": "^2.1.6"
+  },
+  "dependencies": {
+    "fabric": "^6.5.4"
+  }
+}

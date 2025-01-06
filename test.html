@@ -1,0 +1,29 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="./lib/style.css">
+    <script type="importmap">
+      {
+        "imports": {
+          "fabricjs-label-editor": "./lib/index.ts",
+          "fabric": "https://cdn.jsdelivr.net/npm/fabric@latest/dist/index.mjs"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <script type="module" src="./ts-browser.js"></script>
+    <script type="text/typescript">
+      import * as Editor from "fabricjs-label-editor";
+      window.LabelEditor = Editor;
+      import * as fabric from 'fabric';
+      window.Fabric = fabric;
+      console.log('Imported the thing!', Editor);
+      console.log('Also imported fabric', fabric);
+
+      var container = document.getElementById('image-editor-container');
+      var imgEditor = new Editor.ImageEditor(container);
+      window.EditorApp = imgEditor;
+    </script>
+    <div id="image-editor-container"></div>
+  </body>
+</html>

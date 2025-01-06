@@ -52,16 +52,6 @@ body {
   position: relative;
 }
 
-.floating-zoom-level-container {
-  position: absolute;
-  z-index: 10000;
-  background: white;
-  padding: 10px 20px;
-  bottom: 0;
-  right: 0;
-  border: 1px solid #ccc;
-}
-
 .canvas-holder {
   margin: auto;
   width: 100%;
@@ -145,10 +135,6 @@ body {
 
 .toolpanel.closed .content .hide-show-handler {
   background-image: url('/lib/caret-right.svg');
-}
-
-.spectrum.with-add-on {
-  width: 40px;
 }
 
 #shapes-panel .button {
@@ -250,18 +236,6 @@ body {
   padding: 20px;
 }
 
-.custom-modal-content .button-download {
-  border: 1px solid #ccc;
-  padding: 10px;
-  cursor: pointer;
-  margin: 5px;
-  border-radius: 3px;
-}
-
-.custom-modal-content .button-download:hover {
-  background: #ccc;
-  transition: 0.3s;
-}
 
 .toolpanel .input-container {
   display: flex;
@@ -323,11 +297,6 @@ body {
 .toolpanel .input-container .custom-number-input input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
-}
-
-/* Firefox */
-.toolpanel .input-container .custom-number-input input[type=number] {
-  -moz-appearance: textfield;
 }
 
 .tab-container .tabs {

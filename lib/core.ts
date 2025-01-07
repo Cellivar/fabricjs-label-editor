@@ -39,7 +39,9 @@ export class ImageEditor {
         this.createElement('div', undefined, ['content'], [canvasElem])
       ])
     );
-    this.canvas = new fabric.Canvas(canvasElem, {});
+    this.canvas = new fabric.Canvas(canvasElem, {
+      backgroundColor: 'white'
+    });
 
     this.fileUploadInput = this.createElement('input', 'btn-image-upload') as HTMLInputElement;
     this.fileUploadInput.type = "file";

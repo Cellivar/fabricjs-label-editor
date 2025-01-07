@@ -5,6 +5,9 @@ import { UndoRedoStack } from "./undo-redo-stack.js";
 import { alignObject, countDecimals, getActiveFontStyle, setActiveFontStyle } from "./utils.js";
 import { SaveInBrowser } from "./saveInBrowser.js";
 
+import sheet from './style.css' with { type: 'css' };
+document.adoptedStyleSheets.push(sheet);
+
 /**
  * Image Editor class
  * @param {String} containerSelector jquery selector for image editor container

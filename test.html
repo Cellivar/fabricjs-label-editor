@@ -1,6 +1,5 @@
 <html>
   <head>
-    <link rel="stylesheet" href="./lib/style.css">
     <script type="importmap">
       {
         "imports": {
@@ -9,20 +8,16 @@
         }
       }
     </script>
+    <script type="module" src="./ts-browser.js"></script>
   </head>
   <body>
-    <script type="module" src="./ts-browser.js"></script>
     <script type="text/typescript">
       import * as Editor from "fabricjs-label-editor";
       window.LabelEditor = Editor;
       import * as fabric from 'fabric';
       window.Fabric = fabric;
-      console.log('Imported the thing!', Editor);
-      console.log('Also imported fabric', fabric);
 
-      var container = document.getElementById('image-editor-container');
-      var imgEditor = new Editor.ImageEditor(container);
-      window.EditorApp = imgEditor;
+      window.EditorApp = new Editor.ImageEditor(document.getElementById('image-editor-container'));
     </script>
     <div id="image-editor-container"></div>
   </body>

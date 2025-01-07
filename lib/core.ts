@@ -19,7 +19,6 @@ export class ImageEditor {
   toolbar: HTMLDivElement;
 
   activeTool: ButtonModes | undefined;
-  activeSelection: fabric.FabricObject | fabric.FabricObject[] | undefined;
 
   constructor(
     public readonly containerElement: HTMLElement,
@@ -117,8 +116,7 @@ export class ImageEditor {
           ?.setAttribute('class', `toolpanel visible type-${selectType}`);
       } else {
         this.canvas.discardActiveObject();
-        this.canvas.renderAll();
-        this.activeSelection = undefined;
+        this.canvas.requestRenderAll();
       }
     }
 
@@ -177,15 +175,6 @@ export class ImageEditor {
       await this.canvas.loadFromJSON(JSON.parse(op));
       this.canvas.requestRenderAll();
     }
-  }
-
-  /**
-   * Event handler when select objects on fabric canvas
-   * @param {Object} activeSelection fabric js object
-   */
-  public setActiveSelection(activeSelection: fabric.FabricObject | fabric.FabricObject[] | undefined) {
-    this.activeSelection = activeSelection;
-    this.setActiveTool('select');
   }
 
   /**
@@ -417,7 +406,7 @@ export class ImageEditor {
           }).setCoords()
           this.canvas.add(obj)
 
-          this.canvas.renderAll()
+          this.canvas.requestRenderAll()
           this.canvas.fire('object:modified')
         }
         reader.readAsText(file)
@@ -436,7 +425,7 @@ export class ImageEditor {
         img.scaleToWidth(300)
         this.canvas.add(img)
 
-        this.canvas.renderAll()
+        this.canvas.requestRenderAll()
         this.canvas.fire('object:modified')
       }
 
@@ -445,7 +434,6 @@ export class ImageEditor {
   }
 
   private initializeCanvas() {
-    //try {
       this.canvas.setDimensions({
         width: 800,
         height: 600
@@ -460,9 +448,9 @@ export class ImageEditor {
       fabric.FabricObject.prototype.padding = 0;
 
       // retrieve active selection to react state
-      this.canvas.on('selection:created', (e) => this.setActiveSelection(e.selected))
-      this.canvas.on('selection:updated', (e) => this.setActiveSelection(e.selected))
-      this.canvas.on('selection:cleared', () => this.setActiveSelection(undefined))
+      this.canvas.on('selection:created', () => this.setActiveTool('select'))
+      this.canvas.on('selection:updated', () => this.setActiveTool('select'))
+      this.canvas.on('selection:cleared', () => this.setActiveTool('select'))
 
       this.canvas.on('object:modified', () => {
         if (this.canvas === undefined) { return; }
@@ -503,7 +491,7 @@ export class ImageEditor {
 
         if (isArrow) {
           activeObject.setCoords();
-          this.canvas.renderAll();
+          this.canvas.requestRenderAll();
           this.canvas.fire('object:modified');
         }
       });
@@ -696,6 +684,7 @@ export class ImageEditor {
 
       lineToDraw.setCoords();
       isDrawing = false;
+      this.canvas.setActiveObject(lineToDraw);
       this.canvas.fire('object:modified');
       this.canvas.requestRenderAll();
     });
@@ -800,7 +789,7 @@ export class ImageEditor {
           top: 0
         });
         this.canvas.add(obj);
-        this.canvas.renderAll();
+        this.canvas.requestRenderAll();
         this.canvas.fire('object:modified');
       });
     });
@@ -828,86 +817,82 @@ export class ImageEditor {
             style: "bold",
             icon: `<svg id="Capa_1" x="0px" y="0px" viewBox="-70 -70 450 450" xml:space="preserve"><path d="M218.133,144.853c20.587-14.4,35.2-37.653,35.2-59.52C253.333,37.227,216.107,0,168,0H34.667v298.667h150.187 c44.693,0,79.147-36.267,79.147-80.853C264,185.387,245.547,157.76,218.133,144.853z M98.667,53.333h64c17.707,0,32,14.293,32,32 s-14.293,32-32,32h-64V53.333z M173.333,245.333H98.667v-64h74.667c17.707,0,32,14.293,32,32S191.04,245.333,173.333,245.333z"></path></svg>`,
             callback: () => {
-              const sel = this.canvas.getActiveObjects();
-              if (sel.at(0) instanceof fabric.Textbox) {
-                setActiveFontStyle(
-                  sel, 'fontWeight',
-                  getActiveFontStyle(sel, 'fontWeight') === 'bold' ? '' : 'bold'
-                );
-                this.canvas.renderAll(), this.canvas.fire('object:modified');
-              }
+              this.canvas.getActiveObjects().forEach(o =>
+                setActiveFontStyle(o, 'fontWeight',
+                  getActiveFontStyle(o, 'fontWeight') === 'bold' ? '' : 'bold'
+                ));
+              this.canvas.requestRenderAll();
+              this.canvas.fire('object:modified');
             }
           },
           {
             style: "italic",
             icon: `<svg id="Capa_1" x="0px" y="0px" viewBox="-70 -70 450 450" xml:space="preserve"><polygon points="106.667,0 106.667,64 153.92,64 80.747,234.667 21.333,234.667 21.333,298.667 192,298.667 192,234.667 144.747,234.667 217.92,64 277.333,64 277.333,0  "></polygon></svg>`,
             callback: () => {
-              const sel = this.activeSelection as fabric.IText;
-              setActiveFontStyle(
-                sel, 'fontStyle',
-                getActiveFontStyle(sel, 'fontStyle') === 'italic' ? '' : 'italic'
-              );
-
-              this.canvas.renderAll(), this.canvas.fire('object:modified');
+              this.canvas.getActiveObjects().forEach(o =>
+                setActiveFontStyle(
+                  o, 'fontStyle',
+                  getActiveFontStyle(o, 'fontStyle') === 'italic' ? '' : 'italic'
+                ));
+              this.canvas.requestRenderAll();
+              this.canvas.fire('object:modified');
             }
           },
           {
             style: "underline",
             icon: `<svg id="Capa_1" x="0px" y="0px" viewBox="-70 -70 450 450" xml:space="preserve"><path d="M192,298.667c70.72,0,128-57.28,128-128V0h-53.333v170.667c0,41.28-33.387,74.667-74.667,74.667 s-74.667-33.387-74.667-74.667V0H64v170.667C64,241.387,121.28,298.667,192,298.667z"></path><rect x="42.667" y="341.333" width="298.667" height="42.667"></rect></svg>`,
             callback: () => {
-              const sel = this.activeSelection as fabric.IText;
-              setActiveFontStyle(
-                sel, 'underline',
-                !getActiveFontStyle(sel, 'underline')
-              );
-
-              this.canvas.renderAll(), this.canvas.fire('object:modified');
+              this.canvas.getActiveObjects().forEach(o =>
+                setActiveFontStyle(o, 'underline',
+                  !getActiveFontStyle(o, 'underline')
+                ));
+              this.canvas.requestRenderAll();
+              this.canvas.fire('object:modified');
             }
           },
           {
             style: "linethrough",
             icon: `<svg id="Capa_1" x="0px" y="0px" viewBox="-70 -70 450 450" xml:space="preserve"><polygon points="149.333,160 234.667,160 234.667,96 341.333,96 341.333,32 42.667,32 42.667,96 149.333,96"></polygon><rect x="149.333" y="288" width="85.333" height="64"></rect><rect x="0" y="202.667" width="384" height="42.667"></rect></svg>`,
             callback: () => {
-              const sel = this.activeSelection as fabric.IText;
-              setActiveFontStyle(
-                sel, 'linethrough',
-                !getActiveFontStyle(sel, 'linethrough')
-              );
-
-              this.canvas.renderAll(), this.canvas.fire('object:modified');
+              this.canvas.getActiveObjects().forEach(o =>
+                setActiveFontStyle(o, 'linethrough',
+                  !getActiveFontStyle(o, 'linethrough')
+                ));
+              this.canvas.requestRenderAll();
+              this.canvas.fire('object:modified');
             }
           },
-          {
-            style: "subscript",
-            icon: `<svg id="Capa_1" x="0px" y="0px" viewBox="0 0 512 512" xml:space="preserve"><path d="M248.257,256l103.986-103.758c2.777-2.771,4.337-6.532,4.337-10.455c0-3.923-1.561-7.684-4.337-10.455l-49.057-48.948 c-5.765-5.753-15.098-5.753-20.863,0L178.29,186.188L74.258,82.384c-5.764-5.751-15.098-5.752-20.863,0L4.337,131.333 C1.561,134.103,0,137.865,0,141.788c0,3.923,1.561,7.684,4.337,10.455L108.324,256L4.337,359.758 C1.561,362.528,0,366.29,0,370.212c0,3.923,1.561,7.684,4.337,10.455l49.057,48.948c5.765,5.753,15.098,5.753,20.863,0 l104.033-103.804l104.032,103.804c2.883,2.876,6.657,4.315,10.432,4.315s7.549-1.438,10.432-4.315l49.056-48.948 c2.777-2.771,4.337-6.532,4.337-10.455c0-3.923-1.561-7.684-4.337-10.455L248.257,256z"></path><path d="M497.231,384.331h-44.973l35.508-31.887c14.878-13.36,20.056-34.18,13.192-53.04 c-6.874-18.89-23.565-31.044-43.561-31.717c-0.639-0.021-1.283-0.032-1.928-0.032c-31.171,0-56.531,25.318-56.531,56.439 c0,8.157,6.613,14.769,14.769,14.769c8.156,0,14.769-6.613,14.769-14.769c0-14.833,12.109-26.901,26.992-26.901 c0.316,0,0.631,0.005,0.937,0.016c11.573,0.39,15.78,9.511,16.795,12.297c2.163,5.946,1.942,14.574-5.171,20.962l-64.19,57.643 c-4.552,4.088-6.112,10.56-3.923,16.273c2.189,5.714,7.673,9.486,13.792,9.486h83.523c8.157,0,14.769-6.613,14.769-14.769 S505.387,384.331,497.231,384.331z"></path></svg>`,
-            callback: () => {
-              const sel = this.activeSelection as fabric.IText;
-              if (getActiveFontStyle(sel, 'deltaY') > 0) {
-                setActiveFontStyle(sel, 'fontSize', undefined)
-                setActiveFontStyle(sel, 'deltaY', undefined)
-              } else {
-                this.activeSelection
-                sel.setSubscript(sel.selectionStart!, sel.selectionEnd!);
-              }
-
-              this.canvas.renderAll(), this.canvas.fire('object:modified');
-            }
-          },
-          {
-            style: "superscript",
-            icon: `<svg id="Capa_1" x="0px" y="0px" viewBox="0 0 512 512" xml:space="preserve"><path d="M248.257,259.854l103.986-103.758c2.777-2.771,4.337-6.532,4.337-10.455c0-3.923-1.561-7.684-4.337-10.455l-49.057-48.948 c-5.765-5.753-15.098-5.753-20.863,0L178.29,190.042L74.258,86.238c-5.764-5.751-15.099-5.752-20.863,0L4.337,135.187 C1.561,137.958,0,141.719,0,145.642s1.561,7.684,4.337,10.455l103.986,103.758L4.337,363.612C1.561,366.383,0,370.145,0,374.067 c0,3.922,1.561,7.684,4.337,10.455l49.057,48.948c5.765,5.753,15.098,5.753,20.863,0l104.033-103.804l104.032,103.804 c2.883,2.876,6.657,4.315,10.432,4.315s7.549-1.438,10.432-4.315l49.056-48.948c2.777-2.771,4.337-6.532,4.337-10.455 s-1.561-7.684-4.337-10.455L248.257,259.854z"></path><path d="M497.231,190.893h-44.973l35.508-31.887c14.878-13.36,20.056-34.18,13.192-53.04 c-6.874-18.89-23.565-31.044-43.561-31.717c-0.639-0.021-1.283-0.032-1.928-0.032c-31.171,0-56.531,25.318-56.531,56.439 c0,8.157,6.613,14.769,14.769,14.769c8.156,0,14.769-6.613,14.769-14.769c0-14.833,12.109-26.901,26.992-26.901 c0.316,0,0.631,0.005,0.937,0.016c11.573,0.39,15.78,9.511,16.795,12.297c2.163,5.946,1.942,14.574-5.171,20.962l-64.19,57.643 c-4.552,4.088-6.112,10.56-3.923,16.273c2.189,5.714,7.673,9.486,13.792,9.486h83.523c8.157,0,14.769-6.613,14.769-14.769 S505.387,190.893,497.231,190.893z"></path></svg>`,
-            callback: () => {
-              const sel = this.activeSelection as fabric.IText;
-              if (getActiveFontStyle(sel, 'deltaY') < 0) {
-                setActiveFontStyle(sel, 'fontSize', undefined)
-                setActiveFontStyle(sel, 'deltaY', undefined)
-              } else {
-                sel.setSuperscript(sel.selectionStart!, sel.selectionEnd!);
-              }
-
-              this.canvas.renderAll(), this.canvas.fire('object:modified');
-            }
-          },
+          // {
+          //   style: "subscript",
+          //   icon: `<svg id="Capa_1" x="0px" y="0px" viewBox="0 0 512 512" xml:space="preserve"><path d="M248.257,256l103.986-103.758c2.777-2.771,4.337-6.532,4.337-10.455c0-3.923-1.561-7.684-4.337-10.455l-49.057-48.948 c-5.765-5.753-15.098-5.753-20.863,0L178.29,186.188L74.258,82.384c-5.764-5.751-15.098-5.752-20.863,0L4.337,131.333 C1.561,134.103,0,137.865,0,141.788c0,3.923,1.561,7.684,4.337,10.455L108.324,256L4.337,359.758 C1.561,362.528,0,366.29,0,370.212c0,3.923,1.561,7.684,4.337,10.455l49.057,48.948c5.765,5.753,15.098,5.753,20.863,0 l104.033-103.804l104.032,103.804c2.883,2.876,6.657,4.315,10.432,4.315s7.549-1.438,10.432-4.315l49.056-48.948 c2.777-2.771,4.337-6.532,4.337-10.455c0-3.923-1.561-7.684-4.337-10.455L248.257,256z"></path><path d="M497.231,384.331h-44.973l35.508-31.887c14.878-13.36,20.056-34.18,13.192-53.04 c-6.874-18.89-23.565-31.044-43.561-31.717c-0.639-0.021-1.283-0.032-1.928-0.032c-31.171,0-56.531,25.318-56.531,56.439 c0,8.157,6.613,14.769,14.769,14.769c8.156,0,14.769-6.613,14.769-14.769c0-14.833,12.109-26.901,26.992-26.901 c0.316,0,0.631,0.005,0.937,0.016c11.573,0.39,15.78,9.511,16.795,12.297c2.163,5.946,1.942,14.574-5.171,20.962l-64.19,57.643 c-4.552,4.088-6.112,10.56-3.923,16.273c2.189,5.714,7.673,9.486,13.792,9.486h83.523c8.157,0,14.769-6.613,14.769-14.769 S505.387,384.331,497.231,384.331z"></path></svg>`,
+          //   callback: () => {
+          //     const sel = this.canvas.getActiveObject();
+          //     if (getActiveFontStyle(sel, 'deltaY') > 0) {
+          //       setActiveFontStyle(sel, 'fontSize', undefined)
+          //       setActiveFontStyle(sel, 'deltaY', undefined)
+          //     } else {
+          //       this.activeSelection
+          //       sel.setSubscript(sel.selectionStart!, sel.selectionEnd!);
+          //     }
+          //     this.canvas.requestRenderAll();
+          //     this.canvas.fire('object:modified');
+          //   }
+          // },
+          // {
+          //   style: "superscript",
+          //   icon: `<svg id="Capa_1" x="0px" y="0px" viewBox="0 0 512 512" xml:space="preserve"><path d="M248.257,259.854l103.986-103.758c2.777-2.771,4.337-6.532,4.337-10.455c0-3.923-1.561-7.684-4.337-10.455l-49.057-48.948 c-5.765-5.753-15.098-5.753-20.863,0L178.29,190.042L74.258,86.238c-5.764-5.751-15.099-5.752-20.863,0L4.337,135.187 C1.561,137.958,0,141.719,0,145.642s1.561,7.684,4.337,10.455l103.986,103.758L4.337,363.612C1.561,366.383,0,370.145,0,374.067 c0,3.922,1.561,7.684,4.337,10.455l49.057,48.948c5.765,5.753,15.098,5.753,20.863,0l104.033-103.804l104.032,103.804 c2.883,2.876,6.657,4.315,10.432,4.315s7.549-1.438,10.432-4.315l49.056-48.948c2.777-2.771,4.337-6.532,4.337-10.455 s-1.561-7.684-4.337-10.455L248.257,259.854z"></path><path d="M497.231,190.893h-44.973l35.508-31.887c14.878-13.36,20.056-34.18,13.192-53.04 c-6.874-18.89-23.565-31.044-43.561-31.717c-0.639-0.021-1.283-0.032-1.928-0.032c-31.171,0-56.531,25.318-56.531,56.439 c0,8.157,6.613,14.769,14.769,14.769c8.156,0,14.769-6.613,14.769-14.769c0-14.833,12.109-26.901,26.992-26.901 c0.316,0,0.631,0.005,0.937,0.016c11.573,0.39,15.78,9.511,16.795,12.297c2.163,5.946,1.942,14.574-5.171,20.962l-64.19,57.643 c-4.552,4.088-6.112,10.56-3.923,16.273c2.189,5.714,7.673,9.486,13.792,9.486h83.523c8.157,0,14.769-6.613,14.769-14.769 S505.387,190.893,497.231,190.893z"></path></svg>`,
+          //   callback: () => {
+          //     const sel = this.canvas.getActiveObject();
+          //     if (getActiveFontStyle(sel, 'deltaY') < 0) {
+          //       setActiveFontStyle(sel, 'fontSize', undefined)
+          //       setActiveFontStyle(sel, 'deltaY', undefined)
+          //     } else {
+          //       sel.setSuperscript(sel.selectionStart!, sel.selectionEnd!);
+          //     }
+          //     this.canvas.requestRenderAll();
+          //     this.canvas.fire('object:modified');
+          //   }
+          // },
         ] as const;
 
         const styleContainer = this.createElement('div', undefined, ['style']);
@@ -916,7 +901,7 @@ export class ImageEditor {
           const b = this.createElement('button', s.style);
           b.innerHTML = s.icon;
           styleContainer.appendChild(b);
-          b.addEventListener('click', () => s.callback.bind(this));
+          b.addEventListener('click', s.callback.bind(this));
         });
       }
 
@@ -946,8 +931,10 @@ export class ImageEditor {
         );
 
         fontFamily.addEventListener('change', () => {
-          setActiveFontStyle(this.activeSelection as fabric.IText, 'fontFamily', fontFamily.value);
-          this.canvas.renderAll(), this.canvas.fire('object:modified');
+          this.canvas.getActiveObjects().forEach(o =>
+            setActiveFontStyle(o, 'fontFamily', fontFamily.value)
+          );
+          this.canvas.requestRenderAll(), this.canvas.fire('object:modified');
         });
       }
 
@@ -958,18 +945,27 @@ export class ImageEditor {
 
         const fontSize = this.createCustomNumInput(sizes, 'fontSize', 'Font Size', 20, 1);
         fontSize.addEventListener('change', () => {
-          setActiveFontStyle(this.activeSelection as fabric.IText, 'fontSize', Number(fontSize.value));
-          this.canvas.renderAll(), this.canvas.fire('object:modified');
+          this.canvas.getActiveObjects().forEach(o =>
+            setActiveFontStyle(o, 'fontSize', Number(fontSize.value))
+          );
+          this.canvas.requestRenderAll();
+          this.canvas.fire('object:modified');
         });
-        const lineHeight = this.createCustomNumInput(sizes, 'lineHeight', 'Line Height', 1, 0, 3, 0.1);
+        const lineHeight = this.createCustomNumInput(sizes, 'lineHeight', 'Line Height', 1, 0.1, 3, 0.1);
         lineHeight.addEventListener('change', () => {
-          setActiveFontStyle(this.activeSelection as fabric.IText, 'lineHeight', Number(lineHeight.value));
-          this.canvas.renderAll(), this.canvas.fire('object:modified');
+          this.canvas.getActiveObjects().forEach(o =>
+            o.set('lineHeight', Number(lineHeight.value))
+          );
+          this.canvas.requestRenderAll();
+          this.canvas.fire('object:modified');
         });
         const charSpacing = this.createCustomNumInput(sizes, 'charSpacing', 'Letter Spacing', 0, 0, 2000, 100);
         charSpacing.addEventListener('change', () => {
-          setActiveFontStyle(this.activeSelection as fabric.IText, 'charSpacing', Number(charSpacing.value));
-          this.canvas.renderAll(), this.canvas.fire('object:modified');
+          this.canvas.getActiveObjects().forEach(o =>
+            o.set('charSpacing', Number(charSpacing.value))
+          );
+          this.canvas.requestRenderAll();
+          this.canvas.fire('object:modified');
         });
         sizes.appendChild(this.createElement('p'));
       }
@@ -991,8 +987,9 @@ export class ImageEditor {
           ])
         );
         fontSelect.addEventListener('change', () => {
-          setActiveFontStyle(this.activeSelection as fabric.IText, 'textAlign', fontSelect.value);
-          this.canvas.renderAll(), this.canvas.fire('object:modified');
+          this.canvas.getActiveObject()?.set('textAlign', fontSelect.value);
+          this.canvas.requestRenderAll();
+          this.canvas.fire('object:modified');
         });
       }
 
@@ -1011,8 +1008,9 @@ export class ImageEditor {
           ])
         );
         colorPicker.addEventListener('change', () => {
-          setActiveFontStyle(this.activeSelection as fabric.IText, 'fill', colorPicker.value);
-          this.canvas.renderAll(), this.canvas.fire('object:modified');
+          this.canvas.getActiveObjects()
+            .forEach(o => setActiveFontStyle(o, 'fill', colorPicker.value));
+          this.canvas.requestRenderAll(), this.canvas.fire('object:modified');
         });
       }
 
@@ -1033,7 +1031,7 @@ export class ImageEditor {
           strokeUniform: true,
           strokeWidth: Number(borderInput.value)
         }));
-        this.canvas.renderAll(), this.canvas.fire('object:modified');
+        this.canvas.requestRenderAll(), this.canvas.fire('object:modified');
       });
 
       const borderStyle = this.createElement(
@@ -1049,15 +1047,14 @@ export class ImageEditor {
         ])
       );
       borderStyle.addEventListener('change', () => {
-        try {
-          let style = JSON.parse(borderStyle.value);
-          this.canvas.getActiveObjects().forEach(obj => obj.set({
-            strokeUniform: true,
-            strokeDashArray: style.strokeDashArray,
-            strokeLineCap: style.strokeLineCap
-          }));
-          this.canvas.renderAll(), this.canvas.fire('object:modified')
-        } catch (_) { }
+        let style = JSON.parse(borderStyle.value);
+        this.canvas.getActiveObjects().forEach(obj => obj.set({
+          strokeUniform: true,
+          strokeDashArray: style.strokeDashArray,
+          strokeLineCap: style.strokeLineCap
+        }));
+        this.canvas.requestRenderAll();
+        this.canvas.fire('object:modified');
       });
 
       const cornerType = this.createElement('select', 'input-corner-type', [], [
@@ -1072,7 +1069,8 @@ export class ImageEditor {
       );
       cornerType.addEventListener('change', () => {
         this.canvas.getActiveObjects().forEach(obj => obj.set('strokeLineJoin', cornerType.value))
-        this.canvas.renderAll(), this.canvas.fire('object:modified')
+        this.canvas.requestRenderAll();
+        this.canvas.fire('object:modified');
       });
 
       const colorPicker = this.createElement('input', 'color-picker-border') as HTMLInputElement;
@@ -1086,7 +1084,8 @@ export class ImageEditor {
       );
       colorPicker.addEventListener('input', () => {
         this.canvas.getActiveObjects().forEach(obj => obj.set('stroke', colorPicker.value));
-        this.canvas.renderAll(), this.canvas.fire('object:modified');
+        this.canvas.requestRenderAll();
+        this.canvas.fire('object:modified');
       });
 
       contentElem.appendChild(this.createElement('hr'));
@@ -1112,7 +1111,8 @@ export class ImageEditor {
 
       colorPicker.addEventListener('input', () => {
         this.canvas.getActiveObjects().forEach(obj => obj.set('fill', colorPicker.value));
-        this.canvas.renderAll(); this.canvas.fire('object:modified');
+        this.canvas.requestRenderAll();
+        this.canvas.fire('object:modified');
       });
 
     }
@@ -1133,6 +1133,8 @@ export class ImageEditor {
         btn.addEventListener('click', () => {
           const selected = this.canvas.getActiveObjects();
           selected.forEach(o => alignObject(this.canvas, o, item.pos));
+          this.canvas.requestRenderAll();
+          this.canvas.fire('object:modified');
         });
       });
       alignmentSection.appendChild(this.createElement('hr'));
@@ -1169,7 +1171,7 @@ export class ImageEditor {
       objectOptions.appendChild(bringFwd);
       bringFwd.addEventListener('click', () => {
         this.canvas.bringObjectForward(this.canvas?.getActiveObject()!);
-        this.canvas.renderAll(), this.canvas.fire('object:modified');
+        this.canvas.requestRenderAll(), this.canvas.fire('object:modified');
       });
 
       const bringBack = this.createElement('button', 'bringBack');
@@ -1177,7 +1179,7 @@ export class ImageEditor {
       objectOptions.appendChild(bringBack);
       bringBack.addEventListener('click', () => {
         this.canvas.sendObjectBackwards(this.canvas?.getActiveObject()!);
-        this.canvas.renderAll(), this.canvas.fire('object:modified');
+        this.canvas.requestRenderAll(), this.canvas.fire('object:modified');
       });
 
       const duplicate = this.createElement('button', 'duplicate');

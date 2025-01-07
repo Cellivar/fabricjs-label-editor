@@ -217,39 +217,31 @@ export function alignObject(
 }
 
 export function getActiveFontStyle(
-  activeSelection: fabric.Textbox,
+  obj: fabric.FabricObject | undefined,
   styleName: keyof Partial<fabric.CompleteTextStyleDeclaration>
-) {
-  if (activeSelection.isEditing) {
-    let styles = activeSelection.getSelectionStyles();
-    return styles.find(s => s[styleName]);
+): string | number | boolean | fabric.TFiller {
+  if (obj === undefined) { return ''; }
+  if ((obj as fabric.IText).isEditing === true) {
+    const styles = (obj as fabric.IText).getSelectionStyles();
+    const val = styles.find(s => s[styleName] !== undefined && s[styleName] !== '') ?? {};
+    return val[styleName] ?? '';
+  } else {
+    return obj.get(styleName) ?? '';
   }
-  return '';
-  if (activeSelection.getSelectionStyles && activeSelection.isEditing) {
-    let styles = activeSelection.getSelectionStyles()
-    if (styles.find(o => o[styleName] === '')) {
-      return ''
-    }
-
-    return styles[0][styleName]
-  }
-
-  return activeSelection.get(styleName) || '';
 }
 
 export function setActiveFontStyle(
-  activeSelection: fabric.Textbox,
-  styleName: keyof fabric.IText,
+  obj: fabric.FabricObject | undefined,
+  styleName: (keyof Partial<fabric.CompleteTextStyleDeclaration>),
   value: any
 ) {
-  if (activeSelection.setSelectionStyles && activeSelection.isEditing) {
-    let style: Partial<fabric.IText> = {}
+  if (obj === undefined) { return; }
+  if ((obj as fabric.IText).isEditing === true) {
+    let style: Partial<fabric.CompleteTextStyleDeclaration> = {}
     style[styleName] = value;
-    activeSelection.fontWeight
-    activeSelection.setSelectionStyles(style)
-    activeSelection.setCoords()
+    (obj as fabric.IText).setSelectionStyles(style);
   } else {
-    activeSelection.set(styleName, value)
+    obj.set(styleName, value);
   }
 }
 
